@@ -17,14 +17,11 @@
   },
   "dependencies": {
     "@codigo/audio-transcription-core": "workspace:*",
-    "node-fetch": "^3.3.2",
-    "retry": "^0.13.1"
+    "undici": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "@types/retry": "^0.12.5",
     "@types/tap": "^15.0.12",
-    "nock": "^13.5.6",
     "tap": "^21.0.1",
     "ts-node": "^10.9.0",
     "typescript": "^5.7.2"
