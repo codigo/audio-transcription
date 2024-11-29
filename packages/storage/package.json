@@ -1,0 +1,46 @@
+{
+  "name": "@codigo/audio-transcription-storage",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tap --disable-coverage test/**/*.test.ts",
+    "clean": "rm -rf dist",
+    "migrate": "tsx src/migrations/index.ts",
+    "postinstall": "node scripts/check-sqlite.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0"
+  },
+  "devDependencies": {
+    "@codigo/audio-transcription-core": "workspace:*",
+    "@types/better-sqlite3": "^7.6.4",
+    "@types/node": "^22.10.1",
+    "@types/tap": "^15.0.12",
+    "tap": "^21.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "ts-node": "^10.9.0"
+  },
+  "peerDependencies": {
+    "@codigo/audio-transcription-core": "workspace:*"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
