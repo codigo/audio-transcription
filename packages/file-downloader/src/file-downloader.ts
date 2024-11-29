@@ -1,8 +1,8 @@
-import { createWriteStream } from 'node:fs';
-import { unlink } from 'node:fs/promises';
-import fetch, { Response } from 'node-fetch';
-import { Readable } from 'node:stream';
-import { FileDownloaderPort } from '@codigo/audio-transcription-core';
+import { createWriteStream } from "node:fs";
+import { unlink } from "node:fs/promises";
+import fetch, { Response } from "node-fetch";
+import { Readable } from "node:stream";
+import { FileDownloaderPort } from "@codigo/audio-transcription-core";
 
 export interface FileDownloaderOptions {
   /**
@@ -25,20 +25,20 @@ export class FileDownloaderError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly cause?: Error
+    public readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'FileDownloaderError';
+    this.name = "FileDownloaderError";
   }
 }
 
-const DEFAULT_OPTIONS: Required<Omit<FileDownloaderOptions, 'headers'>> = {
+const DEFAULT_OPTIONS: Required<Omit<FileDownloaderOptions, "headers">> = {
   timeout: 30000,
   maxFileSize: 25 * 1024 * 1024, // 25MB
 };
 
 export const createFileDownloader = (
-  options: FileDownloaderOptions = {}
+  options: FileDownloaderOptions = {},
 ): FileDownloaderPort => {
   const config = { ...DEFAULT_OPTIONS, ...options };
 
@@ -61,16 +61,19 @@ export const createFileDownloader = (
       if (!response.ok) {
         throw new FileDownloaderError(
           `HTTP error ${response.status}: ${response.statusText}`,
-          'HTTP_ERROR'
+          "HTTP_ERROR",
         );
       }
 
       // Check content length if available
-      const contentLength = parseInt(response.headers.get('content-length') ?? '0', 10);
+      const contentLength = parseInt(
+        response.headers.get("content-length") ?? "0",
+        10,
+      );
       if (contentLength > config.maxFileSize) {
         throw new FileDownloaderError(
           `File size ${contentLength} exceeds maximum size of ${config.maxFileSize}`,
-          'FILE_TOO_LARGE'
+          "FILE_TOO_LARGE",
         );
       }
 
@@ -81,14 +84,14 @@ export const createFileDownloader = (
 
       await new Promise<void>((resolve, reject) => {
         if (!response?.body) {
-          reject(new FileDownloaderError('No response body', 'EMPTY_RESPONSE'));
+          reject(new FileDownloaderError("No response body", "EMPTY_RESPONSE"));
           return;
         }
 
         let hasError = false;
         let hasReceivedData = false;
 
-        response.body.on('data', (chunk) => {
+        response.body.on("data", (chunk) => {
           if (hasError) return; // Skip if we already have an error
 
           hasReceivedData = true;
@@ -96,45 +99,53 @@ export const createFileDownloader = (
           if (downloadedSize > config.maxFileSize) {
             hasError = true;
             controller.abort();
-            reject(new FileDownloaderError(
-              `File size exceeds maximum size of ${config.maxFileSize}`,
-              'FILE_TOO_LARGE'
-            ));
+            reject(
+              new FileDownloaderError(
+                `File size exceeds maximum size of ${config.maxFileSize}`,
+                "FILE_TOO_LARGE",
+              ),
+            );
             return;
           }
         });
 
-        response.body.on('end', () => {
+        response.body.on("end", () => {
           if (!hasReceivedData && !hasError) {
             hasError = true;
-            reject(new FileDownloaderError('Empty response body', 'EMPTY_RESPONSE'));
+            reject(
+              new FileDownloaderError("Empty response body", "EMPTY_RESPONSE"),
+            );
             return;
           }
         });
 
-        response.body.on('error', (error) => {
+        response.body.on("error", (error) => {
           if (hasError) return; // Skip if we already have an error
 
           hasError = true;
-          reject(new FileDownloaderError(
-            `Download stream error: ${error.message}`,
-            'STREAM_ERROR',
-            error
-          ));
+          reject(
+            new FileDownloaderError(
+              `Download stream error: ${error.message}`,
+              "STREAM_ERROR",
+              error,
+            ),
+          );
         });
 
-        writeStream!.on('error', (error) => {
+        writeStream!.on("error", (error) => {
           if (hasError) return; // Skip if we already have an error
 
           hasError = true;
-          reject(new FileDownloaderError(
-            `Write stream error: ${error.message}`,
-            'WRITE_ERROR',
-            error
-          ));
+          reject(
+            new FileDownloaderError(
+              `Write stream error: ${error.message}`,
+              "WRITE_ERROR",
+              error,
+            ),
+          );
         });
 
-        writeStream!.on('finish', () => {
+        writeStream!.on("finish", () => {
           if (!hasError) {
             resolve();
           }
@@ -142,7 +153,6 @@ export const createFileDownloader = (
 
         response.body.pipe(writeStream!);
       });
-
     } catch (error) {
       // Clean up the partial file if it exists
       try {
@@ -156,18 +166,18 @@ export const createFileDownloader = (
       }
 
       // Handle AbortError specifically for timeouts
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         throw new FileDownloaderError(
-          'Download timeout exceeded',
-          'TIMEOUT_ERROR',
-          error
+          "Download timeout exceeded",
+          "TIMEOUT_ERROR",
+          error,
         );
       }
 
       throw new FileDownloaderError(
-        `Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'DOWNLOAD_FAILED',
-        error instanceof Error ? error : undefined
+        `Failed to download file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "DOWNLOAD_FAILED",
+        error instanceof Error ? error : undefined,
       );
     } finally {
       // Clear timeout if it exists

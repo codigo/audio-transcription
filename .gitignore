@@ -42,3 +42,8 @@ temp/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Tap and Test Results
+**/*.tap
+**/.tap/**
+**/*.test.json

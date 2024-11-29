@@ -28,19 +28,19 @@ yarn add @codigo/audio-transcription-file-downloader
 ## Usage
 
 ```typescript
-import { createFileDownloader } from '@codigo/audio-transcription-file-downloader';
+import { createFileDownloader } from "@codigo/audio-transcription-file-downloader";
 
 const downloader = createFileDownloader();
 
 try {
   await downloader.downloadFile(
-    'https://example.com/myfile.mp3',
-    '/path/to/destination.mp3'
+    "https://example.com/myfile.mp3",
+    "/path/to/destination.mp3",
   );
-  console.log('File downloaded successfully!');
+  console.log("File downloaded successfully!");
 } catch (error) {
   if (error instanceof FileDownloaderError) {
-    console.error('Download failed:', error.message, error.code);
+    console.error("Download failed:", error.message, error.code);
   }
 }
 ```
@@ -55,9 +55,9 @@ const downloader = createFileDownloader({
   timeout: 10000,
   // Custom headers (useful for authorization)
   headers: {
-    'Authorization': 'Bearer token',
-    'X-Custom-Header': 'value'
-  }
+    Authorization: "Bearer token",
+    "X-Custom-Header": "value",
+  },
 });
 ```
 
@@ -67,16 +67,14 @@ const downloader = createFileDownloader({
 const downloader = createFileDownloader();
 
 // The URL already contains the necessary authentication parameters
-const s3PreSignedUrl = 'https://my-bucket.s3.amazonaws.com/file.mp3?AWSAccessKeyId=...';
+const s3PreSignedUrl =
+  "https://my-bucket.s3.amazonaws.com/file.mp3?AWSAccessKeyId=...";
 
 try {
-  await downloader.downloadFile(
-    s3PreSignedUrl,
-    '/local/path/file.mp3'
-  );
-  console.log('S3 file downloaded successfully!');
+  await downloader.downloadFile(s3PreSignedUrl, "/local/path/file.mp3");
+  console.log("S3 file downloaded successfully!");
 } catch (error) {
-  console.error('S3 download failed:', error.message);
+  console.error("S3 download failed:", error.message);
 }
 ```
 
@@ -121,26 +119,26 @@ try {
 } catch (error) {
   if (error instanceof FileDownloaderError) {
     switch (error.code) {
-      case 'FILE_TOO_LARGE':
-        console.error('File exceeds size limit');
+      case "FILE_TOO_LARGE":
+        console.error("File exceeds size limit");
         break;
-      case 'HTTP_ERROR':
-        console.error('HTTP request failed:', error.message);
+      case "HTTP_ERROR":
+        console.error("HTTP request failed:", error.message);
         break;
-      case 'STREAM_ERROR':
-        console.error('Stream processing error:', error.message);
+      case "STREAM_ERROR":
+        console.error("Stream processing error:", error.message);
         break;
-      case 'WRITE_ERROR':
-        console.error('File system write error:', error.message);
+      case "WRITE_ERROR":
+        console.error("File system write error:", error.message);
         break;
-      case 'TIMEOUT_ERROR':
-        console.error('Download timeout exceeded');
+      case "TIMEOUT_ERROR":
+        console.error("Download timeout exceeded");
         break;
-      case 'EMPTY_RESPONSE':
-        console.error('Empty response body received');
+      case "EMPTY_RESPONSE":
+        console.error("Empty response body received");
         break;
-      case 'DOWNLOAD_FAILED':
-        console.error('General download failure:', error.message);
+      case "DOWNLOAD_FAILED":
+        console.error("General download failure:", error.message);
         break;
     }
   }
@@ -149,22 +147,22 @@ try {
 
 ### Error Codes
 
-| Code | Description |
-|------|-------------|
-| `FILE_TOO_LARGE` | File size exceeds the configured maximum |
-| `HTTP_ERROR` | HTTP request failed (non-200 response) |
-| `STREAM_ERROR` | Error processing the download stream |
-| `WRITE_ERROR` | Error writing to the destination file |
-| `TIMEOUT_ERROR` | Download timeout exceeded |
-| `EMPTY_RESPONSE` | No data received in response |
-| `DOWNLOAD_FAILED` | General download failure |
+| Code              | Description                              |
+| ----------------- | ---------------------------------------- |
+| `FILE_TOO_LARGE`  | File size exceeds the configured maximum |
+| `HTTP_ERROR`      | HTTP request failed (non-200 response)   |
+| `STREAM_ERROR`    | Error processing the download stream     |
+| `WRITE_ERROR`     | Error writing to the destination file    |
+| `TIMEOUT_ERROR`   | Download timeout exceeded                |
+| `EMPTY_RESPONSE`  | No data received in response             |
+| `DOWNLOAD_FAILED` | General download failure                 |
 
 Always handle cleanup:
 
 ```typescript
 let tempPath;
 try {
-  tempPath = '/tmp/download.tmp';
+  tempPath = "/tmp/download.tmp";
   await downloader.downloadFile(url, tempPath);
   // Process the file...
 } finally {
@@ -185,13 +183,12 @@ const downloader = createFileDownloader({
 Use with temp files:
 
 ```typescript
-import { mkdtemp } from 'fs/promises';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import { mkdtemp } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 
-const tempDir = await mkdtemp(join(tmpdir(), 'downloads-'));
-const tempFile = join(tempDir, 'download.tmp');
-
+const tempDir = await mkdtemp(join(tmpdir(), "downloads-"));
+const tempFile = join(tempDir, "download.tmp");
 ```
 
 ## License

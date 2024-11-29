@@ -21,7 +21,7 @@ npm install @codigo/audio-transcription-core
 ### Basic Setup
 
 ```typescript
-import { createTranscriptionService } from '@codigo/audio-transcription-core';
+import { createTranscriptionService } from "@codigo/audio-transcription-core";
 // Initialize with your implementations of the required dependencies
 const transcriptionService = createTranscriptionService({
   storage, // Implementation of StoragePort

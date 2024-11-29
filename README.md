@@ -15,6 +15,7 @@ A composable and framework-agnostic service for transcribing audio files using O
 
 ## Project Structure
 
+```
 audio-transcription-service/
 ├── packages/
 │ ├── core/ # Core business logic and types
@@ -24,6 +25,7 @@ audio-transcription-service/
 │ ├── file-downloader/ # File download handling
 │ ├── whisper-client/ # OpenAI Whisper API client
 │ └── webhook-client/ # Webhook notification client
+```
 
 ## Installation
 
@@ -228,8 +230,8 @@ The file downloader supports the following options:
 
 ```typescript
 interface FileDownloaderOptions {
-  timeout?: number;        // Request timeout in ms (default: 30000)
-  maxFileSize?: number;    // Max file size in bytes (default: 25MB)
+  timeout?: number; // Request timeout in ms (default: 30000)
+  maxFileSize?: number; // Max file size in bytes (default: 25MB)
   headers?: Record<string, string>; // Custom request headers
 }
 ```
@@ -240,11 +242,11 @@ The Whisper client can be configured with:
 
 ```typescript
 interface WhisperClientOptions {
-  apiKey: string;         // OpenAI API key
-  baseUrl?: string;       // Custom API URL
-  maxRetries?: number;    // Max retry attempts (default: 3)
-  maxFileSize?: number;   // Max file size in bytes (default: 25MB)
-  timeout?: number;       // Request timeout in ms (default: 30000)
+  apiKey: string; // OpenAI API key
+  baseUrl?: string; // Custom API URL
+  maxRetries?: number; // Max retry attempts (default: 3)
+  maxFileSize?: number; // Max file size in bytes (default: 25MB)
+  timeout?: number; // Request timeout in ms (default: 30000)
 }
 ```
 
@@ -254,8 +256,8 @@ The SQLite storage supports:
 
 ```typescript
 interface SqliteStorageOptions {
-  path: string;           // Path to SQLite database file
-  migrate?: boolean;      // Run migrations on startup (default: true)
+  path: string; // Path to SQLite database file
+  migrate?: boolean; // Run migrations on startup (default: true)
 }
 ```
 
