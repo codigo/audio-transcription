@@ -1,0 +1,27 @@
+{
+  "name": "@codigo/audio-transcription",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "install:all": "pnpm install",
+    "publish:all": "pnpm -r publish"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/tap": "^15.0.12",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.1",
+    "tap": "^21.0.1",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.7.2"
+  }
+}
