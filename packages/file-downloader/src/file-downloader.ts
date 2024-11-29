@@ -2,7 +2,7 @@ import { createWriteStream } from "node:fs";
 import { unlink } from "node:fs/promises";
 import fetch, { Response } from "node-fetch";
 import { Readable } from "node:stream";
-import { FileDownloaderPort } from "@codigo/audio-transcription-core";
+import type { FileDownloaderPort } from "@codigo/audio-transcription-core";
 
 export interface FileDownloaderOptions {
   /**

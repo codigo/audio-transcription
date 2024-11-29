@@ -27,6 +27,7 @@ export interface WhisperClientPort {
 
 export interface WebhookClientPort {
   notify(webhookUrl: string, job: TranscriptionJob): Promise<void>;
+  shutdown(): Promise<void>;
 }
 
 export interface FileDownloaderPort {
