@@ -1,0 +1,35 @@
+TAP version 14
+# Subtest: TranscriptionService
+    # Subtest: createTranscriptionJob should create a pending job
+        ok 1 - should be equal
+        ok 2 - should be equal
+        ok 3 - should be equal
+        ok 4 - should be equal
+        ok 5 - should be equal
+        ok 6 - should be equal
+        ok 7 - should be equal
+        ok 8 - should be equal
+        ok 9 - should be equal
+        ok 10 - should be equal
+        ok 11 - should be equal
+        ok 12 - should be equal
+        1..12
+    ok 1 - createTranscriptionJob should create a pending job # time=104.499ms
+    
+    # Subtest: should handle errors during transcription
+        ok 1 - should be equal
+        ok 2 - should be equal
+        ok 3 - should be equal
+        ok 4 - should be equal
+        1..4
+    ok 2 - should handle errors during transcription # time=103.549ms
+    
+    # Subtest: getTranscriptionJob should return null for non-existent job
+        ok 1 - should be equal
+        1..1
+    ok 3 - getTranscriptionJob should return null for non-existent job # time=0.8ms
+    
+    1..3
+ok 1 - TranscriptionService # time=211.772ms
+
+1..1

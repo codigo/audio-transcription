@@ -1,0 +1,24 @@
+{
+  "name": "@codigo/audio-transcription-core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tap --disable-coverage test/**/*.test.ts",
+    "clean": "rm -rf dist",
+    "pretest": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/tap": "^15.0.12",
+    "tap": "^21.0.1",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}
