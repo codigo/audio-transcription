@@ -1,0 +1,37 @@
+{
+  "name": "@codigo/audio-transcription-whisper-client",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tap --disable-coverage test/**/*.test.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@codigo/audio-transcription-core": "workspace:*",
+    "form-data": "^4.0.1",
+    "node-fetch": "^3.3.2",
+    "retry": "^0.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/retry": "^0.12.5",
+    "@types/tap": "^15.0.12",
+    "nock": "^13.5.6",
+    "tap": "^21.0.1",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}
