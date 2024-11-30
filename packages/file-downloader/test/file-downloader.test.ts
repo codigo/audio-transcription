@@ -7,14 +7,13 @@ import {
   createFileDownloader,
   FileDownloaderError,
 } from "../src/file-downloader.js";
-import { Readable } from "node:stream";
 
 const BASE_URL = "https://example.com";
 
 t.test("FileDownloader", async (t) => {
   let tempDir: string;
   let mockAgent: MockAgent;
-  let mockPool: ReturnType<MockAgent['get']>;
+  let mockPool: ReturnType<MockAgent["get"]>;
   const originalDispatcher = getGlobalDispatcher();
 
   t.beforeEach(async () => {
@@ -128,8 +127,8 @@ t.test("FileDownloader", async (t) => {
         path: "/test.txt",
         method: "GET",
         headers: {
-          "x-custom-header": "custom-value"
-        }
+          "x-custom-header": "custom-value",
+        },
       })
       .reply(200, fileContent);
 

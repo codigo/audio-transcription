@@ -14,7 +14,7 @@ const createMockStorage = (): StoragePort => {
   const jobs = new Map<string, TranscriptionJob>();
 
   return {
-    createJob: async (job) => {
+    createJob: async (job): Promise<TranscriptionJob> => {
       const newJob = {
         ...job,
         id: randomUUID(),
@@ -24,7 +24,7 @@ const createMockStorage = (): StoragePort => {
       jobs.set(newJob.id, newJob);
       return newJob;
     },
-    updateJob: async (id, update) => {
+    updateJob: async (id, update): Promise<TranscriptionJob> => {
       const job = jobs.get(id);
       if (!job) throw new Error("Job not found");
 
@@ -36,10 +36,10 @@ const createMockStorage = (): StoragePort => {
       jobs.set(id, updatedJob);
       return updatedJob;
     },
-    getJob: async (id) => {
+    getJob: async (id): Promise<TranscriptionJob | null> => {
       return jobs.get(id) ?? null;
     },
-    close: async () => {
+    close: async (): Promise<void> => {
       // No-op
     },
   };
@@ -55,8 +55,11 @@ const createMockWebhookClient = (): WebhookClientPort & {
   const calls: TranscriptionJob[] = [];
   return {
     calls,
-    notify: async (webhookUrl, job) => {
+    notify: async (webhookUrl, job): Promise<void> => {
       calls.push(job);
+    },
+    shutdown: async (): Promise<void> => {
+      // No-op
     },
   };
 };
@@ -67,7 +70,7 @@ const createMockFileDownloader = (): FileDownloaderPort & {
   const downloads: string[] = [];
   return {
     downloads,
-    downloadFile: async (url) => {
+    downloadFile: async (url): Promise<void> => {
       downloads.push(url);
     },
   };

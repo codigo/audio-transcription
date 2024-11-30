@@ -8,24 +8,40 @@ A composable and framework-agnostic service for transcribing audio files using O
 - Asynchronous processing of audio files
 - S3 and HTTP file download support with retries and validation
 - SQLite storage for job tracking with migrations
-- Webhook notifications
+- Webhook notifications with retry logic and payload signing
 - Error handling and retries for API calls
 - Fully tested with node-tap
 - Written in TypeScript with functional programming principles
 
 ## Project Structure
 
-```
+```bash
 audio-transcription-service/
 ├── packages/
-│ ├── core/ # Core business logic and types
-│ ├── fastify-adapter/ # Fastify integration
-│ ├── express-adapter/ # Express integration
-│ ├── storage/ # SQLite storage with migrations
-│ ├── file-downloader/ # File download handling
+│ ├── core/           # Core business logic and types
+│ ├── fastify-adapter/# Fastify integration
+│ ├── express-adapter/# Express integration
+│ ├── storage/        # SQLite storage with migrations
+│ ├── file-downloader/# File download handling with streaming
 │ ├── whisper-client/ # OpenAI Whisper API client
-│ └── webhook-client/ # Webhook notification client
+│ └── webhook-client/ # Webhook notification client with retries
 ```
+
+## Prerequisites
+
+Before installing, ensure you have:
+
+- Node.js 22.x or later
+- pnpm 9.x or later
+
+### System Dependencies
+
+Some packages require additional system dependencies:
+
+- **SQLite3**: Required by the storage package
+  - See [@codigo/audio-transcription-storage](packages/storage/README.md#prerequisites) for installation instructions
+- **Build Tools**: Required for native dependencies
+  - See individual package READMEs for platform-specific requirements
 
 ## Installation
 
@@ -41,154 +57,134 @@ pnpm install @codigo/audio-transcription/fastify-adapter
 pnpm install @codigo/audio-transcription/express-adapter
 ```
 
-### System Requirements
-
-You need to have the following installed:
-
-- Node.js 16.x or later
-- pnpm 7.x or later
-- SQLite3 and development files
-
-#### Ubuntu/Debian
-
-```bash
-sudo apt-get update
-sudo apt-get install sqlite3 libsqlite3-dev build-essential
-```
-
-#### macOS
-
-```bash
-brew install sqlite3
-```
-
-#### Windows
-
-Install Windows Build Tools (as administrator):
-
-```bash
-npm install --global windows-build-tools
-```
-
-Make sure Python and Visual Studio Build Tools are properly installed
-
-Verifying Prerequisites
+### Verifying Installation
 
 You can verify your setup with:
 
 ```bash
+# Check Node.js version
 node --version
 
 # Check pnpm version
 pnpm --version
 
-# Check SQLite version
+# Verify SQLite installation
 sqlite3 --version
 ```
 
 ## Usage
 
-### Fastify
+### Basic Setup
+
+```typescript
+import { createTranscriptionService } from "@codigo/audio-transcription/core";
+import { createSqliteStorage } from "@codigo/audio-transcription/storage";
+import { createWhisperClient } from "@codigo/audio-transcription/whisper-client";
+import { createWebhookClient } from "@codigo/audio-transcription/webhook-client";
+import { createFileDownloader } from "@codigo/audio-transcription/file-downloader";
+
+// Initialize core dependencies
+const storage = createSqliteStorage({
+  path: "./transcriptions.db",
+  migrate: true, // Run migrations automatically
+});
+
+const whisperClient = createWhisperClient({
+  apiKey: process.env.OPENAI_API_KEY,
+  maxRetries: 3,
+  timeout: 30000,
+});
+
+const webhookClient = createWebhookClient({
+  concurrency: 3,
+  maxRetries: 5,
+  signingSecret: process.env.WEBHOOK_SECRET,
+});
+
+const fileDownloader = createFileDownloader({
+  maxFileSize: 25 * 1024 * 1024, // 25MB
+  timeout: 30000,
+});
+
+// Create the transcription service
+const transcriptionService = createTranscriptionService({
+  storage,
+  whisperClient,
+  webhookClient,
+  fileDownloader,
+});
+```
+
+### Framework Integration
+
+#### Fastify
 
 ```typescript
 import Fastify from "fastify";
-import { createTranscriptionService } from "@codigo/audio-transcription/core";
 import { createFastifyAdapter } from "@codigo/audio-transcription/fastify-adapter";
-import { createSqliteStorage } from "@codigo/audio-transcription/storage";
-import { createWhisperClient } from "@codigo/audio-transcription/whisper-client";
-import { createWebhookClient } from "@codigo/audio-transcription/webhook-client";
 
 const fastify = Fastify();
-
-const storage = createSqliteStorage({
-  path: "./transcriptions.db",
-});
-
-const whisperClient = createWhisperClient({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const webhookClient = createWebhookClient({
-  endpoint: "https://your-webhook-endpoint.com",
-});
-
-const transcriptionService = createTranscriptionService({
-  storage,
-  whisperClient,
-  webhookClient,
-});
-
 const transcriptionRouter = createFastifyAdapter(transcriptionService);
 
 fastify.register(transcriptionRouter);
-
 fastify.listen({ port: 3000 });
 ```
 
-### Express
+#### Express
 
 ```typescript
 import express from "express";
-import { createTranscriptionService } from "@codigo/audio-transcription/core";
 import { createExpressAdapter } from "@codigo/audio-transcription/express-adapter";
-import { createSqliteStorage } from "@codigo/audio-transcription/storage";
-import { createWhisperClient } from "@codigo/audio-transcription/whisper-client";
-import { createWebhookClient } from "@codigo/audio-transcription/webhook-client";
 
 const app = express();
-
-const storage = createSqliteStorage({
-  path: "./transcriptions.db",
-});
-
-const whisperClient = createWhisperClient({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const webhookClient = createWebhookClient({
-  endpoint: "https://your-webhook-endpoint.com",
-});
-
-const transcriptionService = createTranscriptionService({
-  storage,
-  whisperClient,
-  webhookClient,
-});
-
 const transcriptionRouter = createExpressAdapter(transcriptionService);
 
 app.use("/api/transcriptions", transcriptionRouter);
-
 app.listen(3000);
 ```
 
-### API
+### API Usage
 
-#### POST /transcriptions
-
-Create a new transcription job.
+#### Create a Transcription Job
 
 ```typescript
-interface CreateTranscriptionRequest {
-  audioFileUrl: string;
-  webhookUrl?: string;
-}
+// POST /transcriptions
+const response = await fetch("http://localhost:3000/transcriptions", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    audioFileUrl: "https://example.com/audio.mp3",
+    webhookUrl: "https://your-webhook.com/callback",
+  }),
+});
 
-interface CreateTranscriptionResponse {
-  jobId: string;
-}
+const { jobId } = await response.json();
 ```
 
-#### GET /transcriptions/:jobId
-
-Get the status and result of a transcription job.
+#### Check Job Status
 
 ```typescript
-interface TranscriptionResponse {
-  jobId: string;
-  status: "pending" | "processing" | "completed" | "failed";
-  result?: string;
-  error?: string;
+// GET /transcriptions/:jobId
+const response = await fetch(`http://localhost:3000/transcriptions/${jobId}`);
+const job = await response.json();
+
+console.log(job.status); // "pending" | "processing" | "completed" | "failed"
+console.log(job.result); // Transcription text when completed
+```
+
+### Webhook Notifications
+
+When a job completes, a webhook notification is sent with the following payload:
+
+```typescript
+{
+  id: string;          // Job ID
+  status: string;      // Job status
+  result?: string;     // Transcription result (if completed)
+  error?: string;      // Error message (if failed)
+  audioFileUrl: string;// Original audio file URL
+  timestamp: string;   // ISO timestamp
+  eventType: string;   // "transcription.status_updated"
 }
 ```
 

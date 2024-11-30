@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc",
     "test": "tap --disable-coverage test/**/*.test.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@codigo/audio-transcription-core": "workspace:*",

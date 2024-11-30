@@ -1,0 +1,24 @@
+name: Lint and Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-sqlite@v1
+        with:
+          sqlite-version: 3.40.0
+          sqlite-year: 2022
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: true
+      - run: pnpm install
+      - run: pnpm build
+      - run: pnpm migrate --filter=@codigo/audio-transcription-storage
+      - run: pnpm lint
+      - run: pnpm test

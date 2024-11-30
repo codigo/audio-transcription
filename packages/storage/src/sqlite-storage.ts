@@ -39,13 +39,26 @@ export class SqliteInitializationError extends Error {
   }
 }
 
-const parseJob = (row: any): TranscriptionJob => ({
+// Add this interface to define the database row structure
+interface TranscriptionJobRow {
+  id: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  audio_file_url: string;
+  result: string | null;
+  error: string | null;
+  webhook_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Update the parseJob function with the proper type
+const parseJob = (row: TranscriptionJobRow): TranscriptionJob => ({
   id: row.id,
   status: row.status,
   audioFileUrl: row.audio_file_url,
-  result: row.result,
-  error: row.error,
-  webhookUrl: row.webhook_url,
+  result: row.result ?? undefined,
+  error: row.error ?? undefined,
+  webhookUrl: row.webhook_url ?? undefined,
   createdAt: new Date(row.created_at),
   updatedAt: new Date(row.updated_at),
 });
@@ -53,6 +66,21 @@ const parseJob = (row: any): TranscriptionJob => ({
 const isSqliteError = (error: unknown): error is SqliteErrorWithCode => {
   return error instanceof Error && "code" in error;
 };
+
+// Add interfaces for statement parameters
+interface CreateJobParams {
+  status: TranscriptionJobRow['status'];
+  audio_file_url: string;
+  webhook_url: string | null;
+}
+
+interface UpdateJobParams {
+  id: string;
+  status: TranscriptionJobRow['status'] | null;
+  result: string | null;
+  error: string | null;
+  webhook_url: string | null;
+}
 
 export const createSqliteStorage = async (
   options: SqliteStorageOptions,
@@ -123,12 +151,12 @@ export const createSqliteStorage = async (
       ) VALUES (
         lower(hex(randomblob(16))),
         @status,
-        @audioFileUrl,
-        @webhookUrl,
+        @audio_file_url,
+        @webhook_url,
         strftime('%Y-%m-%d %H:%M:%f', 'now'),
         strftime('%Y-%m-%d %H:%M:%f', 'now')
       ) RETURNING *
-    `);
+    `) as Database.Statement<CreateJobParams, TranscriptionJobRow>;
 
     const updateJobStmt = db.prepare(`
       UPDATE transcription_jobs
@@ -136,11 +164,11 @@ export const createSqliteStorage = async (
         status = CASE WHEN @status IS NOT NULL THEN @status ELSE status END,
         result = CASE WHEN @result IS NOT NULL THEN @result ELSE result END,
         error = CASE WHEN @error IS NOT NULL THEN @error ELSE error END,
-        webhook_url = CASE WHEN @webhookUrl IS NOT NULL THEN @webhookUrl ELSE webhook_url END,
+        webhook_url = CASE WHEN @webhook_url IS NOT NULL THEN @webhook_url ELSE webhook_url END,
         updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
       WHERE id = @id
       RETURNING *
-    `);
+    `) as Database.Statement<UpdateJobParams, TranscriptionJobRow>;
 
     const getJobStmt = db.prepare(`
       SELECT * FROM transcription_jobs WHERE id = @id
@@ -154,12 +182,16 @@ export const createSqliteStorage = async (
     const storage = {
       async createJob(job: TranscriptionJob): Promise<TranscriptionJob> {
         try {
-          const row = createJobStmt.get({
+          const params: CreateJobParams = {
             status: job.status,
-            audioFileUrl: job.audioFileUrl,
-            webhookUrl: job.webhookUrl,
-          });
+            audio_file_url: job.audioFileUrl,
+            webhook_url: job.webhookUrl ?? null,
+          };
 
+          const row = createJobStmt.get(params);
+          if (!row) {
+            throw new SqliteError("Failed to create job: no row returned");
+          }
           return parseJob(row);
         } catch (err) {
           let error = err as Error;
@@ -178,19 +210,23 @@ export const createSqliteStorage = async (
             throw new Error(`Job with id ${id} not found`);
           }
 
-          const row = updateJobStmt.get({
+          const params: UpdateJobParams = {
             id,
             status: update.status ?? null,
             result: update.result ?? null,
             error: update.error ?? null,
-            webhookUrl: update.webhookUrl ?? null,
-          });
+            webhook_url: update.webhookUrl ?? null,
+          };
 
+          const row = updateJobStmt.get(params);
+          if (!row) {
+            throw new SqliteError(`Failed to update job ${id}: no row returned`);
+          }
           return parseJob(row);
         } catch (err) {
           let error = err as Error;
           if (error.message.includes("not found")) {
-            throw error; // Re-throw the "not found" error directly
+            throw error;
           }
           throw new SqliteError("Failed to update job", error);
         }
@@ -198,7 +234,7 @@ export const createSqliteStorage = async (
 
       async getJob(id: string): Promise<TranscriptionJob | null> {
         try {
-          const row = getJobStmt.get({ id });
+          const row = getJobStmt.get({ id }) as TranscriptionJobRow | undefined;
           return row ? parseJob(row) : null;
         } catch (err) {
           let error = err as Error;

@@ -120,10 +120,6 @@ export const createWebhookClient = (
 
       if (!response.ok) {
         if (response.status === 429) {
-          const retryAfter = parseInt(
-            response.headers.get("retry-after") || "60",
-            10,
-          );
           throw new WebhookDeliveryError(
             "Rate limit exceeded",
             "RATE_LIMITED",

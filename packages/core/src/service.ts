@@ -8,12 +8,12 @@ import {
   TranscriptionJob,
 } from "./types";
 
-const createTempDir = async () => {
+const createTempDir = async (): Promise<string> => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "transcription-"));
   return tempDir;
 };
 
-const cleanupTempDir = async (dirPath: string) => {
+const cleanupTempDir = async (dirPath: string): Promise<void> => {
   await fs.rm(dirPath, { recursive: true, force: true });
 };
 

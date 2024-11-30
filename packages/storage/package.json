@@ -9,7 +9,8 @@
     "test": "tap --disable-coverage test/**/*.test.ts",
     "clean": "rm -rf dist",
     "migrate": "tsx src/migrations/index.ts",
-    "postinstall": "node scripts/check-sqlite.js"
+    "postinstall": "node scripts/check-sqlite.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "better-sqlite3": "^11.6.0"

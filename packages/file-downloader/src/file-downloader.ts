@@ -39,13 +39,13 @@ const DEFAULT_OPTIONS: Required<Omit<FileDownloaderOptions, "headers">> = {
 
 const pipelineAsync = async (
   readable: NodeJS.ReadableStream,
-  writable: NodeJS.WritableStream
+  writable: NodeJS.WritableStream,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     readable.pipe(writable);
-    writable.on('finish', resolve);
-    writable.on('error', reject);
-    readable.on('error', reject);
+    writable.on("finish", resolve);
+    writable.on("error", reject);
+    readable.on("error", reject);
   });
 };
 
@@ -95,7 +95,7 @@ export const createFileDownloader = (
       const body = Readable.fromWeb(response.body!);
       let downloadedSize = 0;
 
-      body.on('data', (chunk) => {
+      body.on("data", (chunk) => {
         downloadedSize += chunk.length;
         if (downloadedSize > config.maxFileSize) {
           body.destroy();
@@ -112,7 +112,6 @@ export const createFileDownloader = (
       if (downloadedSize === 0) {
         throw new FileDownloaderError("Empty response body", "EMPTY_RESPONSE");
       }
-
     } catch (error) {
       // Clean up the partial file if it exists
       try {
