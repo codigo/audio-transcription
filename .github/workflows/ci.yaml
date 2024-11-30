@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-sqlite@v1
+      - name: Setup SQLite
+        uses: ccorsi/setup-sqlite@v1.0.1
         with:
           sqlite-version: 3.40.0
           sqlite-year: 2022
