@@ -8,6 +8,16 @@ import type { TranscriptionJob } from "@codigo/audio-transcription-core";
 
 const BASE_URL = "https://webhook.test";
 
+// Add this interface near the top of the file, after imports
+interface WebhookPayload {
+  id: string;
+  status: string;
+  result: string;
+  audioFileUrl: string;
+  eventType: string;
+  timestamp: string;
+}
+
 // Mock job data for testing
 const mockJob: TranscriptionJob = {
   id: "123",
@@ -30,7 +40,7 @@ await t.test("WebhookClient", async (t) => {
   await t.test(
     "should successfully deliver webhook with correct payload",
     async (t) => {
-      let capturedPayload: any;
+      let capturedPayload = {} as WebhookPayload;
       let capturedHeaders: Record<string, string> = {};
 
       // Setup mock endpoint

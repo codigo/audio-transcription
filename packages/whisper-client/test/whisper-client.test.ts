@@ -21,7 +21,7 @@ const createTempAudioFile = async (size: number = 1024): Promise<string> => {
 };
 
 // At the top of your test file, add this helper function
-const matchFormData = (body: string) => {
+const matchFormData = (body: string): boolean => {
   // We only care that it contains the required fields, not the exact format
   return (
     body.includes('name="file"') &&
@@ -210,7 +210,7 @@ t.test("WhisperClient", async (t) => {
 
     const scope = nock("https://custom-api.example.com")
       .post("/v1/audio/transcriptions", matchFormData)
-      .reply(function (uri, requestBody) {
+      .reply(function () {
         const hasValidAuth =
           this.req.headers.authorization === "Bearer test-key";
         return hasValidAuth

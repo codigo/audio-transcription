@@ -1,5 +1,4 @@
 import t from "tap";
-import type { Test } from "tap";
 import { join } from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
@@ -10,10 +9,15 @@ import {
   SqliteInitializationError,
   SqliteError,
 } from "../src/sqlite-storage.js";
-import type { TranscriptionJob } from "@codigo/audio-transcription-core";
+import type { TranscriptionJob, StoragePort } from "@codigo/audio-transcription-core";
+
+// Add this type near the top of the file with other imports/types
+type SqliteStorageWithDb = StoragePort & {
+  db: Database.Database;
+};
 
 // Helper to get random test DB path
-const getTestDbPath = () =>
+const getTestDbPath = (): string =>
   join(tmpdir(), `test-${randomBytes(8).toString("hex")}.db`);
 
 // Sample job data with required fields
@@ -97,9 +101,9 @@ t.test("initialization", async (t) => {
   t.test("handles SQLite installation issues", async (t) => {
     // Mock error that would occur when SQLite is not installed
     const originalPrepare = Database.prototype.prepare;
-    Database.prototype.prepare = function () {
-      const error = new Error("not found");
-      (error as any).code = "SQLITE_ERROR";
+    Database.prototype.prepare = function (): never {
+      const error = new Error("not found") as Error & { code: string };
+      error.code = "SQLITE_ERROR";
       throw error;
     };
 
@@ -116,7 +120,7 @@ t.test("initialization", async (t) => {
   t.test("handles unknown errors", async (t) => {
     // Mock unknown error
     const originalPrepare = Database.prototype.prepare;
-    Database.prototype.prepare = function () {
+    Database.prototype.prepare = function (): never {
       throw new Error("Unknown error");
     };
 
@@ -133,7 +137,7 @@ t.test("initialization", async (t) => {
   t.test("handles non-Error objects", async (t) => {
     // Mock throwing a non-Error object
     const originalPrepare = Database.prototype.prepare;
-    Database.prototype.prepare = function () {
+    Database.prototype.prepare = function (): never {
       throw "string error"; // Not an Error object
     };
 
@@ -369,15 +373,15 @@ t.test("operation errors", async (t) => {
   const storage = await createSqliteStorage({ path: dbPath });
 
   t.test("handles close errors", async (t) => {
-    // Get access to the internal db instance
-    const storageAny = storage as any;
-    const db = storageAny.db;
+    // Cast to the specific type instead of any
+    const storageWithDb = storage as SqliteStorageWithDb;
+    const db = storageWithDb.db;
 
     // Save original close method
     const originalClose = db.close;
 
     // Replace close method with one that throws
-    db.close = () => {
+    db.close = (): never => {
       throw new Error("Simulated close error");
     };
 
