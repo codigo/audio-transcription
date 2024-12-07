@@ -196,7 +196,7 @@ pnpm clean
 
 - `@codigo/audio-transcription-core`: Core interfaces and types
 - `form-data`: Multipart form data handling
-- `node-fetch`: HTTP client
+- `undici`: HTTP client
 - `retry`: Retry mechanism implementation
 
 ## License

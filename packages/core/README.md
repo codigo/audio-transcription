@@ -26,6 +26,9 @@ interface TranscriptionService {
 
   // Retrieves the status and result of a job
   getTranscriptionJob(jobId: string): Promise<TranscriptionJob | null>;
+
+  // Waits for a job to complete processing
+  waitForJob(jobId: string): Promise<void>;
 }
 ```
 
@@ -118,11 +121,15 @@ async function example() {
 
   console.log("Created job:", job.id);
 
-  // Check job status later
+  // Option 1: Wait for job completion
+  await transcriptionService.waitForJob(job.id);
   const result = await transcriptionService.getTranscriptionJob(job.id);
+  console.log("Transcription:", result?.result);
 
-  if (result?.status === "completed") {
-    console.log("Transcription:", result.result);
+  // Option 2: Check job status manually
+  const status = await transcriptionService.getTranscriptionJob(job.id);
+  if (status?.status === "completed") {
+    console.log("Transcription:", status.result);
   }
 }
 ```
@@ -180,7 +187,7 @@ interface FileDownloaderPort {
 }
 ```
 
-## Job States
+## Job States and Waiting
 
 A transcription job can be in one of four states:
 
@@ -188,6 +195,23 @@ A transcription job can be in one of four states:
 - **processing**: Audio file is being downloaded and transcribed
 - **completed**: Transcription finished successfully
 - **failed**: An error occurred during processing
+
+You can wait for a job to finish processing using the `waitForJob` method:
+```typescript
+// Create a job and wait for completion
+const job = await service.createTranscriptionJob(audioFileUrl);
+await service.waitForJob(job.id);
+
+// Check the final result
+const result = await service.getTranscriptionJob(job.id);
+if (result?.status === "completed") {
+  console.log("Transcription:", result.result);
+} else if (result?.status === "failed") {
+  console.error("Failed:", result.error);
+}
+```
+
+This is particularly useful when you need to ensure a job has completed before proceeding with further processing.
 
 ## Error Handling
 
