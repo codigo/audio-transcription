@@ -197,6 +197,7 @@ A transcription job can be in one of four states:
 - **failed**: An error occurred during processing
 
 You can wait for a job to finish processing using the `waitForJob` method:
+
 ```typescript
 // Create a job and wait for completion
 const job = await service.createTranscriptionJob(audioFileUrl);
