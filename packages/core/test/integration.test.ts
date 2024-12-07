@@ -97,7 +97,7 @@ t.test("Transcription Service Integration", async (t) => {
       .intercept({
         path: "/callback",
         method: "POST",
-        body: (body) => true,
+        body: () => true,
       })
       .reply(
         200,
