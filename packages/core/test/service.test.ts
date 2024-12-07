@@ -166,4 +166,52 @@ t.test("TranscriptionService", async (t) => {
       t.equal(job, null);
     },
   );
+
+  t.test("waitForJob should wait for job completion", async (t) => {
+    const storage = createMockStorage();
+    const whisperClient = createMockWhisperClient();
+    const webhookClient = createMockWebhookClient();
+    const fileDownloader = createMockFileDownloader();
+
+    const service = createTranscriptionService({
+      storage,
+      whisperClient,
+      webhookClient,
+      fileDownloader,
+    });
+
+    const job = await service.createTranscriptionJob("https://example.com/audio.mp3");
+
+    // Start waiting for the job immediately
+    const waitPromise = service.waitForJob(job.id);
+
+    // Job should still be pending
+    const pendingJob = await service.getTranscriptionJob(job.id);
+    t.equal(pendingJob?.status, "pending");
+
+    // Wait for job completion
+    await waitPromise;
+
+    // Job should now be completed
+    const completedJob = await service.getTranscriptionJob(job.id);
+    t.equal(completedJob?.status, "completed");
+    t.equal(completedJob?.result, "Mocked transcription result");
+  });
+
+  t.test("waitForJob should resolve immediately for unknown job ID", async (t) => {
+    const storage = createMockStorage();
+    const whisperClient = createMockWhisperClient();
+    const webhookClient = createMockWebhookClient();
+    const fileDownloader = createMockFileDownloader();
+
+    const service = createTranscriptionService({
+      storage,
+      whisperClient,
+      webhookClient,
+      fileDownloader,
+    });
+
+    // Should resolve without throwing
+    await t.resolves(service.waitForJob("non-existent-id"));
+  });
 });

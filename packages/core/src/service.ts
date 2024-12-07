@@ -20,22 +20,31 @@ const cleanupTempDir = async (dirPath: string): Promise<void> => {
 export const createTranscriptionService = (
   deps: TranscriptionServiceDependencies,
 ): TranscriptionService => {
+  // Keep track of pending jobs
+  const pendingJobs = new Map<string, Promise<void>>();
+
   const processTranscription = async (job: TranscriptionJob): Promise<void> => {
     try {
+      console.log(`Starting transcription for job ${job.id}`);
       const tempDir = await createTempDir();
       const audioFilePath = path.join(tempDir, `${randomUUID()}.audio`);
 
       try {
         // Update job status to processing
+        console.log(`Updating job ${job.id} to processing status`);
         await deps.storage.updateJob(job.id, { status: "processing" });
 
         // Download the file
+        console.log(`Downloading file for job ${job.id}`);
         await deps.fileDownloader.downloadFile(job.audioFileUrl, audioFilePath);
 
         // Get transcription from Whisper
+        console.log(`Transcribing file for job ${job.id}`);
         const result = await deps.whisperClient.transcribe(audioFilePath);
+        console.log(`Got transcription result for job ${job.id}:`, result);
 
         // Update job with result
+        console.log(`Updating job ${job.id} with result`);
         const updatedJob = await deps.storage.updateJob(job.id, {
           status: "completed",
           result,
@@ -43,18 +52,23 @@ export const createTranscriptionService = (
 
         // Send webhook if URL was provided
         if (updatedJob.webhookUrl) {
+          console.log(`Sending webhook for job ${job.id}`);
           await deps.webhookClient.notify(updatedJob.webhookUrl, updatedJob);
         }
       } finally {
+        console.log(`Cleaning up temp dir for job ${job.id}`);
         await cleanupTempDir(tempDir);
       }
     } catch (error) {
+      console.error(`Error processing job ${job.id}:`, error);
       // Update job with error
       await deps.storage.updateJob(job.id, {
         status: "failed",
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       });
+    } finally {
+      // Remove job from pending map when done
+      pendingJobs.delete(job.id);
     }
   };
 
@@ -68,10 +82,11 @@ export const createTranscriptionService = (
       webhookUrl,
     });
 
-    // Process transcription in the background
-    processTranscription(job).catch((error) => {
+    // Store the processing promise
+    const processingPromise = processTranscription(job).catch((error) => {
       console.error("Background processing failed:", error);
     });
+    pendingJobs.set(job.id, processingPromise);
 
     return job;
   };
@@ -82,8 +97,17 @@ export const createTranscriptionService = (
     return deps.storage.getJob(jobId);
   };
 
+  // Add method to wait for job completion
+  const waitForJob = async (jobId: string): Promise<void> => {
+    const processingPromise = pendingJobs.get(jobId);
+    if (processingPromise) {
+      await processingPromise;
+    }
+  };
+
   return {
     createTranscriptionJob,
     getTranscriptionJob,
+    waitForJob,
   };
 };
