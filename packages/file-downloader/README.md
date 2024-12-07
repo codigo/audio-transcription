@@ -1,107 +1,71 @@
-# @codigo/audio-transcription-file-downloader
+# 📥 @codigo/audio-transcription-file-downloader
 
-A robust and efficient file downloader with stream handling, automatic cleanup, and safety features. Perfect for downloading files from pre-signed S3 URLs or any HTTP source.
+A robust and efficient file downloader service that handles streaming downloads with built-in safety features. It's designed to safely download files from HTTP sources while handling errors, timeouts, and cleanup gracefully.
 
-## Features
+## Core Features
 
-- 🚀 Efficient streaming download
-- 🧹 Automatic cleanup on failures
-- ⚡ Progress tracking
-- 🔒 File size limits
-- ⏱️ Timeout handling
-- 🛡️ Error handling with custom error types
-- 📝 TypeScript support
+- 🚀 Streaming downloads using Node.js streams
+- 🔒 Built-in file size limits protection
+- ⏱️ Configurable timeout handling
+- 🧹 Automatic cleanup on failed downloads
+- 💪 TypeScript support with strong typing
+- 🛡️ Comprehensive error handling with specific error codes
 
 ## Installation
 
 ```bash
-# Using pnpm
 pnpm add @codigo/audio-transcription-file-downloader
-
-# Using npm
-npm install @codigo/audio-transcription-file-downloader
-
-# Using yarn
-yarn add @codigo/audio-transcription-file-downloader
 ```
 
-## Usage
+## How It Works
+
+The file downloader uses Node.js streams and the `undici` HTTP client to efficiently download files:
+
+1. Creates a write stream to the destination path
+2. Streams the download directly to disk instead of loading it into memory
+3. Monitors download size in real-time
+4. Automatically cleans up partial downloads on failure
+5. Provides detailed error information through custom error types
+
+## Basic Usage
 
 ```typescript
 import { createFileDownloader } from "@codigo/audio-transcription-file-downloader";
-
-const downloader = createFileDownloader();
-
-try {
-  await downloader.downloadFile(
-    "https://example.com/myfile.mp3",
-    "/path/to/destination.mp3",
-  );
-  console.log("File downloaded successfully!");
-} catch (error) {
-  if (error instanceof FileDownloaderError) {
-    console.error("Download failed:", error.message, error.code);
-  }
-}
-```
-
-### With Custom Options
-
-```typescript
 const downloader = createFileDownloader({
-  // 5MB maximum file size
-  maxFileSize: 5 * 1024 * 1024,
-  // 10 second timeout
-  timeout: 10000,
-  // Custom headers (useful for authorization)
-  headers: {
-    Authorization: "Bearer token",
-    "X-Custom-Header": "value",
-  },
+timeout: 30000, // 30 seconds timeout
+maxFileSize: 25_000_000, // 25MB max file size
+headers: {
+'Authorization': 'Bearer your-token'
+}
 });
-```
-
-### With Pre-signed S3 URLs
-
-```typescript
-const downloader = createFileDownloader();
-
-// The URL already contains the necessary authentication parameters
-const s3PreSignedUrl =
-  "https://my-bucket.s3.amazonaws.com/file.mp3?AWSAccessKeyId=...";
-
 try {
-  await downloader.downloadFile(s3PreSignedUrl, "/local/path/file.mp3");
-  console.log("S3 file downloaded successfully!");
+await downloader.downloadFile(
+'<https://example.com/large-file.mp3>',
+'./downloads/file.mp3'
+);
+console.log('Download completed successfully');
 } catch (error) {
-  console.error("S3 download failed:", error.message);
+if (error instanceof FileDownloaderError) {
+console.error(Download failed: ${error.code} - ${error.message});
+}
 }
 ```
 
-### API Reference
+## API Reference
+
+### createFileDownloader(options?)
+
+Creates a new file downloader instance with optional configuration.
 
 ```typescript
-createFileDownloader(options?)Creates a new file downloader instance.Optionsinterface FileDownloaderOptions {
-  /**
-   * Timeout in milliseconds for the download request
-   * @default 30000
-   */
-  timeout?: number;
-
-  /**
-   * Maximum file size in bytes
-   * @default 25 * 1024 * 1024 (25MB)
-   */
-  maxFileSize?: number;
-
-  /**
-   * Additional headers to send with the request
-   */
+interface FileDownloaderOptions {
+  timeout?: number; // Default: 30000 (30 seconds)
+  maxFileSize?: number; // Default: 25MB
   headers?: Record<string, string>;
 }
 ```
 
-Returns an object implementing the FileDownloaderPort interface:
+### FileDownloaderPort Interface
 
 ```typescript
 interface FileDownloaderPort {
@@ -109,62 +73,91 @@ interface FileDownloaderPort {
 }
 ```
 
-### Error Handling
+## Error Handling
 
-The downloader throws FileDownloaderError instances with specific error codes:
+The service uses a custom `FileDownloaderError` class that provides specific error codes:
 
 ```typescript
-try {
-  await downloader.downloadFile(url, destPath);
-} catch (error) {
-  if (error instanceof FileDownloaderError) {
-    switch (error.code) {
-      case "FILE_TOO_LARGE":
-        console.error("File exceeds size limit");
-        break;
-      case "HTTP_ERROR":
-        console.error("HTTP request failed:", error.message);
-        break;
-      case "STREAM_ERROR":
-        console.error("Stream processing error:", error.message);
-        break;
-      case "WRITE_ERROR":
-        console.error("File system write error:", error.message);
-        break;
-      case "TIMEOUT_ERROR":
-        console.error("Download timeout exceeded");
-        break;
-      case "EMPTY_RESPONSE":
-        console.error("Empty response body received");
-        break;
-      case "DOWNLOAD_FAILED":
-        console.error("General download failure:", error.message);
-        break;
-    }
-  }
+class FileDownloaderError extends Error {
+constructor(
+message: string,
+public readonly code: string,
+public readonly cause?: Error
+)
 }
 ```
 
-### Error Codes
+### Error Codes and Scenarios
 
-| Code              | Description                              |
-| ----------------- | ---------------------------------------- |
-| `FILE_TOO_LARGE`  | File size exceeds the configured maximum |
-| `HTTP_ERROR`      | HTTP request failed (non-200 response)   |
-| `STREAM_ERROR`    | Error processing the download stream     |
-| `WRITE_ERROR`     | Error writing to the destination file    |
-| `TIMEOUT_ERROR`   | Download timeout exceeded                |
-| `EMPTY_RESPONSE`  | No data received in response             |
-| `DOWNLOAD_FAILED` | General download failure                 |
+| Error Code      | Description                      | Common Causes                                |
+| --------------- | -------------------------------- | -------------------------------------------- |
+| FILE_TOO_LARGE  | File exceeds maximum size limit  | Large files, incorrect Content-Length header |
+| HTTP_ERROR      | Non-200 HTTP response            | 404, 403, 500 responses                      |
+| TIMEOUT_ERROR   | Download exceeded timeout period | Slow connection, server issues               |
+| EMPTY_RESPONSE  | Server returned empty response   | Misconfigured server, invalid URL            |
+| DOWNLOAD_FAILED | Generic download failure         | Network issues, file system errors           |
 
-Always handle cleanup:
+## Advanced Usage Examples
+
+### With Progress Tracking
+
+```typescript
+import { createFileDownloader } from "@codigo/audio-transcription-file-downloader";
+import { createWriteStream } from "fs";
+const downloader = createFileDownloader({
+maxFileSize: 100 1024 1024 // 100MB
+});
+// Track download progress
+let downloadedSize = 0;
+const onProgress = (chunk: Buffer) => {
+downloadedSize += chunk.length;
+console.log(Downloaded: ${downloadedSize} bytes);
+};
+try {
+await downloader.downloadFile(
+'<https://example.com/large-file.mp3>',
+'./downloads/file.mp3'
+);
+} catch (error) {
+if (error instanceof FileDownloaderError) {
+switch (error.code) {
+case 'FILE_TOO_LARGE':
+console.error('File exceeds size limit');
+break;
+case 'TIMEOUT_ERROR':
+console.error('Download timed out');
+break;
+// Handle other error codes...
+}
+}
+}
+```
+
+### With Custom Headers (e.g., for S3)
+
+```typescript
+const downloader = createFileDownloader({
+  headers: {
+    Authorization: "Bearer token",
+    "x-amz-security-token": "aws-session-token",
+  },
+});
+await downloader.downloadFile(
+  "<https://my-bucket.s3.amazonaws.com/file.mp3>",
+  "./downloads/file.mp3",
+);
+```
+
+## Best Practices
+
+### 1. Always handle cleanup in a finally block
 
 ```typescript
 let tempPath;
 try {
-  tempPath = "/tmp/download.tmp";
+  tempPath = "./temp-download.tmp";
   await downloader.downloadFile(url, tempPath);
-  // Process the file...
+  // Process file...
 } finally {
   if (tempPath) {
     await fs.promises.unlink(tempPath).catch(() => {});
@@ -172,29 +165,41 @@ try {
 }
 ```
 
-Set appropriate size limits:
+### 2. Set appropriate size limits for your use case
 
 ```typescript
 const downloader = createFileDownloader({
-  maxFileSize: 10 * 1024 * 1024, // 10MB
+maxFileSize: 50 1024 1024, // 50MB
+timeout: 60000 // 60 seconds
 });
 ```
 
-Use with temp files:
+### 3. Use with temporary directories
 
 ```typescript
 import { mkdtemp } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-
 const tempDir = await mkdtemp(join(tmpdir(), "downloads-"));
 const tempFile = join(tempDir, "download.tmp");
+```
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm test
+
+# Build the package
+pnpm build
+
+# Clean build artifacts
+pnpm clean
 ```
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions are welcome! Please see our contributing guidelines for details.

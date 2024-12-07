@@ -1,84 +1,137 @@
-# @codigo/audio-transcription-storage
+# 💾 @codigo/audio-transcription-storage
 
-SQLite storage implementation for the audio transcription service.
+SQLite-based storage implementation for the audio transcription service. This package provides persistent storage for transcription jobs using SQLite as the backend database.
+
+## Features
+
+- Persistent storage of transcription jobs using SQLite
+- Automatic database migrations
+- Type-safe API with TypeScript
+- Robust error handling
+- Connection pooling and WAL mode for better performance
+- Atomic operations with transaction support
 
 ## Installation
 
 ```bash
-npm install @codigo/audio-transcription-storage
+pnpm add @codigo/audio-transcription-storage
 ```
+
+## Prerequisites
+
+The package requires SQLite3 development files to be installed:
+
+- Ubuntu/Debian: `sudo apt-get install sqlite3 libsqlite3-dev`
+- macOS: `brew install sqlite3`
+- Windows: `pnpm add --global windows-build-tools`
 
 ## Usage
 
-The storage package provides a SQLite implementation of the `StoragePort` interface for persisting transcription jobs.
-
-### Basic Usage
+### Basic Example
 
 ```typescript
 import { createSqliteStorage } from "@codigo/audio-transcription-storage";
-// Initialize the storage
-const storage = await createSqliteStorage({
-  path: "./transcriptions.db",
-  migrate: true, // runs migrations automatically (default: true)
-});
-// Create a new transcription job
-const job = await storage.createJob({
-  status: "pending",
-  audioFileUrl: "https://example.com/audio.mp3",
-  webhookUrl: "https://example.com/webhook",
-});
-// Get a job by ID
-const retrievedJob = await storage.getJob(job.id);
-// Update a job
-const updatedJob = await storage.updateJob(job.id, {
-  status: "completed",
-  result: "Transcription text here",
-});
-// Close the connection when done
-await storage.close();
+
+async function main() {
+  // Initialize storage
+  const storage = await createSqliteStorage({
+    path: "./transcriptions.db",
+  });
+
+  try {
+    // Create a new transcription job
+    const job = await storage.createJob({
+      status: "pending",
+      audioFileUrl: "https://example.com/audio.mp3",
+      webhookUrl: "https://example.com/webhook",
+    });
+    console.log("Created job:", job.id);
+
+    // Get job status
+    const retrievedJob = await storage.getJob(job.id);
+    console.log("Job status:", retrievedJob?.status);
+
+    // Update job with results
+    const updatedJob = await storage.updateJob(job.id, {
+      status: "completed",
+      result: "This is the transcription text",
+    });
+    console.log("Job completed:", updatedJob.result);
+  } finally {
+    // Always close the connection when done
+    await storage.close();
+  }
+}
 ```
 
-### API Reference
+### Detailed API Reference
 
-#### `createSqliteStorage(options: SqliteStorageOptions): Promise<StoragePort>`
+#### Creating Storage Instance
 
-Creates a new SQLite storage instance.
+```typescript
+const storage = await createSqliteStorage({
+  path: string;      // Path to SQLite database file
+  migrate?: boolean; // Whether to run migrations (default: true)
+});
+```
 
-Options:
+#### Job Operations
 
-- `path`: Path to the SQLite database file
-- `migrate`: Whether to run migrations on creation (default: true)
+##### Creating Jobs
 
-Returns a `StoragePort` instance with the following methods:
+```typescript
+const job = await storage.createJob({
+  status: "pending" | "processing" | "completed" | "failed",
+  audioFileUrl: string,
+  webhookUrl?: string
+});
+```
 
-#### `createJob(job: TranscriptionJob): Promise<TranscriptionJob>`
+The `createJob` method:
 
-Creates a new transcription job in the database.
+- Generates a unique ID for the job
+- Sets creation and update timestamps
+- Returns the complete job object
 
-#### `getJob(id: string): Promise<TranscriptionJob | null>`
+##### Retrieving Jobs
 
-Retrieves a job by its ID. Returns null if not found.
+```typescript
+const job = await storage.getJob(jobId);
+```
 
-#### `updateJob(id: string, update: Partial<TranscriptionJob>): Promise<TranscriptionJob>`
+Returns:
 
-Updates an existing job. Throws an error if the job doesn't exist.
+- The job object if found
+- `null` if no job exists with the given ID
 
-#### `close(): Promise<void>`
+##### Updating Jobs
 
-Closes the database connection.
+```typescript
+const updatedJob = await storage.updateJob(jobId, {
+  status?: "pending" | "processing" | "completed" | "failed",
+  result?: string,
+  error?: string,
+  webhookUrl?: string
+});
+```
 
-### TranscriptionJob Interface
+- Updates only the specified fields
+- Automatically updates the `updatedAt` timestamp
+- Returns the complete updated job object
+- Throws if job doesn't exist
+
+### Job Object Structure
 
 ```typescript
 interface TranscriptionJob {
-  id: string;
-  status: string;
-  audioFileUrl: string;
-  result?: string;
-  error?: string;
-  webhookUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string; // Unique identifier
+  status: "pending" | "processing" | "completed" | "failed";
+  audioFileUrl: string; // URL of the audio file
+  result?: string; // Transcription result
+  error?: string; // Error message if failed
+  webhookUrl?: string; // Callback URL
+  createdAt: Date; // Creation timestamp
+  updatedAt: Date; // Last update timestamp
 }
 ```
 
@@ -91,30 +144,67 @@ import {
   SqliteError,
   SqliteInitializationError,
 } from "@codigo/audio-transcription-storage";
+
 try {
   const storage = await createSqliteStorage({ path: "./db.sqlite" });
+  await storage.createJob(/* ... */);
 } catch (error) {
   if (error instanceof SqliteInitializationError) {
-    // Handle initialization errors (missing SQLite, corrupt DB file, etc.)
+    // Handle initialization errors:
+    // - Missing SQLite installation
+    // - Corrupt database file
+    // - Permission issues
+    console.error("Failed to initialize database:", error.message);
   } else if (error instanceof SqliteError) {
-    // Handle operational errors
+    // Handle operational errors:
+    // - Failed queries
+    // - Constraint violations
+    // - Connection issues
+    console.error("Database operation failed:", error.message);
   }
 }
 ```
 
+### Database Schema
+
+The storage uses the following table schema:
+
+```sql
+CREATE TABLE transcription_jobs (
+  id TEXT PRIMARY KEY,
+  status TEXT NOT NULL CHECK (
+    status IN ('pending', 'processing', 'completed', 'failed')
+  ),
+  audio_file_url TEXT NOT NULL,
+  result TEXT,
+  error TEXT,
+  webhook_url TEXT,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);
+```
+
+### Performance Considerations
+
+- Uses Write-Ahead Logging (WAL) mode for better concurrency
+- Prepared statements for query optimization
+- Indexes on frequently queried columns
+- Automatic connection pooling
+
 ## Development
 
-### Prerequisites
-
-- SQLite3 development files:
-  - Ubuntu/Debian: `sudo apt-get install sqlite3 libsqlite3-dev`
-  - macOS: `brew install sqlite3`
-  - Windows: `npm install --global windows-build-tools`
-
-### Running Tests
-
 ```bash
-npm test
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm test
+
+# Build the package
+pnpm build
+
+# Clean build artifacts
+pnpm clean
 ```
 
 ## License

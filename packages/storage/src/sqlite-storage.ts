@@ -69,14 +69,14 @@ const isSqliteError = (error: unknown): error is SqliteErrorWithCode => {
 
 // Add interfaces for statement parameters
 interface CreateJobParams {
-  status: TranscriptionJobRow['status'];
+  status: TranscriptionJobRow["status"];
   audio_file_url: string;
   webhook_url: string | null;
 }
 
 interface UpdateJobParams {
   id: string;
-  status: TranscriptionJobRow['status'] | null;
+  status: TranscriptionJobRow["status"] | null;
   result: string | null;
   error: string | null;
   webhook_url: string | null;
@@ -220,7 +220,9 @@ export const createSqliteStorage = async (
 
           const row = updateJobStmt.get(params);
           if (!row) {
-            throw new SqliteError(`Failed to update job ${id}: no row returned`);
+            throw new SqliteError(
+              `Failed to update job ${id}: no row returned`,
+            );
           }
           return parseJob(row);
         } catch (err) {

@@ -1,104 +1,81 @@
-# Audio Transcription
+# Audio Transcription Service
 
-A composable and framework-agnostic service for transcribing audio files using OpenAI's Whisper API.
+A robust, modular, and framework-agnostic service for transcribing audio files using OpenAI's Whisper API. Built with TypeScript and functional programming principles, this service provides reliable audio transcription with features like automatic retries, webhook notifications, and job tracking.
 
-## Features
+## 🌟 Key Features
 
-- Framework agnostic core with adapters for Fastify and Express
-- Asynchronous processing of audio files
-- S3 and HTTP file download support with retries and validation
-- SQLite storage for job tracking with migrations
-- Webhook notifications with retry logic and payload signing
-- Error handling and retries for API calls
-- Fully tested with node-tap
-- Written in TypeScript with functional programming principles
+- 🎯 Framework agnostic core with adapters for popular web frameworks
+- 🔄 Asynchronous processing with job tracking
+- 📥 Robust file downloading with size limits and validation
+- 💾 Persistent storage with SQLite and automatic migrations
+- 🔔 Reliable webhook notifications with retries and payload signing
+- 🛡️ Comprehensive error handling and retry mechanisms
+- ✅ Fully tested with tap
+- 📝 Written in TypeScript with functional programming principles
 
-## Project Structure
+## 📦 Project Structure
 
 ```bash
 audio-transcription-service/
 ├── packages/
-│ ├── core/           # Core business logic and types
-│ ├── fastify-adapter/# Fastify integration
-│ ├── express-adapter/# Express integration
-│ ├── storage/        # SQLite storage with migrations
-│ ├── file-downloader/# File download handling with streaming
-│ ├── whisper-client/ # OpenAI Whisper API client
-│ └── webhook-client/ # Webhook notification client with retries
+│   ├── core/              # Core business logic and interfaces
+│   ├── storage/           # SQLite-based job storage
+│   ├── whisper-client/    # OpenAI Whisper API client
+│   ├── webhook-client/    # Webhook notification system
+│   ├── file-downloader/   # File download handling
+│   ├── fastify-adapter/   # Fastify integration
+│   └── express-adapter/   # Express integration
 ```
 
-## Prerequisites
+## 🚀 Getting Started
 
-Before installing, ensure you have:
+### Prerequisites
 
 - Node.js 22.x or later
 - pnpm 9.x or later
+- SQLite3 development files
 
-### System Dependencies
-
-Some packages require additional system dependencies:
-
-- **SQLite3**: Required by the storage package
-  - See [@codigo/audio-transcription-storage](packages/storage/README.md#prerequisites) for installation instructions
-- **Build Tools**: Required for native dependencies
-  - See individual package READMEs for platform-specific requirements
-
-## Installation
+### Installation
 
 ```bash
-pnpm install @codigo/audio-transcription/core @codigo/audio-transcription/storage @codigo/audio-transcription/whisper-client @codigo/audio-transcription/webhook-client @codigo/audio-transcription/file-downloader
-```
+# Install core packages
+pnpm add @codigo/audio-transcription-core \
+        @codigo/audio-transcription-storage \
+        @codigo/audio-transcription-whisper-client \
+        @codigo/audio-transcription-webhook-client \
+        @codigo/audio-transcription-file-downloader
 
-Then install your preferred framework adapter:
-
-```bash
-pnpm install @codigo/audio-transcription/fastify-adapter
+# Install your preferred framework adapter
+pnpm add @codigo/audio-transcription-fastify-adapter
 # or
-pnpm install @codigo/audio-transcription/express-adapter
+pnpm add @codigo/audio-transcription-express-adapter
 ```
 
-### Verifying Installation
-
-You can verify your setup with:
-
-```bash
-# Check Node.js version
-node --version
-
-# Check pnpm version
-pnpm --version
-
-# Verify SQLite installation
-sqlite3 --version
-```
-
-## Usage
+## 💡 Usage Examples
 
 ### Basic Setup
 
 ```typescript
-import { createTranscriptionService } from "@codigo/audio-transcription/core";
-import { createSqliteStorage } from "@codigo/audio-transcription/storage";
-import { createWhisperClient } from "@codigo/audio-transcription/whisper-client";
-import { createWebhookClient } from "@codigo/audio-transcription/webhook-client";
-import { createFileDownloader } from "@codigo/audio-transcription/file-downloader";
+import { createTranscriptionService } from "@codigo/audio-transcription-core";
+import { createSqliteStorage } from "@codigo/audio-transcription-storage";
+import { createWhisperClient } from "@codigo/audio-transcription-whisper-client";
+import { createWebhookClient } from "@codigo/audio-transcription-webhook-client";
+import { createFileDownloader } from "@codigo/audio-transcription-file-downloader";
 
-// Initialize core dependencies
+// Initialize dependencies
 const storage = createSqliteStorage({
   path: "./transcriptions.db",
-  migrate: true, // Run migrations automatically
+  migrate: true,
 });
 
 const whisperClient = createWhisperClient({
   apiKey: process.env.OPENAI_API_KEY,
   maxRetries: 3,
-  timeout: 30000,
 });
 
 const webhookClient = createWebhookClient({
-  concurrency: 3,
-  maxRetries: 5,
   signingSecret: process.env.WEBHOOK_SECRET,
+  maxRetries: 5,
 });
 
 const fileDownloader = createFileDownloader({
@@ -106,7 +83,7 @@ const fileDownloader = createFileDownloader({
   timeout: 30000,
 });
 
-// Create the transcription service
+// Create service instance
 const transcriptionService = createTranscriptionService({
   storage,
   whisperClient,
@@ -117,11 +94,11 @@ const transcriptionService = createTranscriptionService({
 
 ### Framework Integration
 
-#### Fastify
+#### With Fastify
 
 ```typescript
 import Fastify from "fastify";
-import { createFastifyAdapter } from "@codigo/audio-transcription/fastify-adapter";
+import { createFastifyAdapter } from "@codigo/audio-transcription-fastify-adapter";
 
 const fastify = Fastify();
 const transcriptionRouter = createFastifyAdapter(transcriptionService);
@@ -130,11 +107,11 @@ fastify.register(transcriptionRouter);
 fastify.listen({ port: 3000 });
 ```
 
-#### Express
+#### With Express
 
 ```typescript
 import express from "express";
-import { createExpressAdapter } from "@codigo/audio-transcription/express-adapter";
+import { createExpressAdapter } from "@codigo/audio-transcription-express-adapter";
 
 const app = express();
 const transcriptionRouter = createExpressAdapter(transcriptionService);
@@ -143,9 +120,9 @@ app.use("/api/transcriptions", transcriptionRouter);
 app.listen(3000);
 ```
 
-### API Usage
+## 🔌 API Usage
 
-#### Create a Transcription Job
+### Create a Transcription Job
 
 ```typescript
 // POST /transcriptions
@@ -161,114 +138,133 @@ const response = await fetch("http://localhost:3000/transcriptions", {
 const { jobId } = await response.json();
 ```
 
-#### Check Job Status
+### Check Job Status
 
 ```typescript
 // GET /transcriptions/:jobId
 const response = await fetch(`http://localhost:3000/transcriptions/${jobId}`);
 const job = await response.json();
 
-console.log(job.status); // "pending" | "processing" | "completed" | "failed"
-console.log(job.result); // Transcription text when completed
+console.log("Status:", job.status); // "pending" | "processing" | "completed" | "failed"
+console.log("Result:", job.result); // Transcription text when completed
 ```
 
-### Webhook Notifications
+## 🔔 Webhook Notifications
 
-When a job completes, a webhook notification is sent with the following payload:
+When a job status changes, a webhook notification is sent with:
 
 ```typescript
 {
-  id: string;          // Job ID
-  status: string;      // Job status
-  result?: string;     // Transcription result (if completed)
-  error?: string;      // Error message (if failed)
-  audioFileUrl: string;// Original audio file URL
-  timestamp: string;   // ISO timestamp
-  eventType: string;   // "transcription.status_updated"
+  id: string;           // Job ID
+  status: string;       // Current job status
+  result?: string;      // Transcription result (if completed)
+  error?: string;       // Error message (if failed)
+  audioFileUrl: string; // Original audio file URL
+  timestamp: string;    // ISO timestamp
+  eventType: string;    // "transcription.status_updated"
 }
 ```
 
-## Development
+### Verifying Webhook Signatures
 
-### Install dependencies
+```typescript
+import { createHmac } from "crypto";
+
+function verifyWebhook(
+  payload: string,
+  signature: string,
+  secret: string,
+): boolean {
+  const expectedSignature = createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return signature === expectedSignature;
+}
+```
+
+## 🛠️ Development
+
+### Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### Run tests
+### Run Tests
 
 ```bash
+# Run all tests
 pnpm test
+
+# Test specific package
+pnpm --filter @codigo/audio-transcription-core test
 ```
 
-### Build all packages
+### Build Packages
 
 ```bash
+# Build all packages
 pnpm build
+
+# Build specific package
+pnpm --filter @codigo/audio-transcription-core build
 ```
 
-### Run specific package tests
-
-```bash
-pnpm --filter @codigo/audio-transcription/core test
-```
-
-## License
-
-MIT
-
-## Configuration
+## 📝 Configuration Options
 
 ### File Downloader
 
-The file downloader supports the following options:
-
 ```typescript
 interface FileDownloaderOptions {
-  timeout?: number; // Request timeout in ms (default: 30000)
-  maxFileSize?: number; // Max file size in bytes (default: 25MB)
-  headers?: Record<string, string>; // Custom request headers
+  timeout?: number; // Request timeout (default: 30000ms)
+  maxFileSize?: number; // Max file size (default: 25MB)
+  headers?: Record<string, string>; // Custom headers
 }
 ```
 
 ### Whisper Client
 
-The Whisper client can be configured with:
-
 ```typescript
 interface WhisperClientOptions {
   apiKey: string; // OpenAI API key
-  baseUrl?: string; // Custom API URL
-  maxRetries?: number; // Max retry attempts (default: 3)
-  maxFileSize?: number; // Max file size in bytes (default: 25MB)
-  timeout?: number; // Request timeout in ms (default: 30000)
+  maxRetries?: number; // Max retries (default: 3)
+  timeout?: number; // Request timeout (default: 30000ms)
 }
 ```
 
-### SQLite Storage
-
-The SQLite storage supports:
+### Storage
 
 ```typescript
-interface SqliteStorageOptions {
-  path: string; // Path to SQLite database file
-  migrate?: boolean; // Run migrations on startup (default: true)
+interface StorageOptions {
+  path: string; // Path to SQLite database
+  migrate?: boolean; // Run migrations (default: true)
 }
 ```
 
-## Error Handling
+## 🔍 Error Handling
 
-The service includes comprehensive error handling:
+The service provides specific error types for different scenarios:
 
-- `FileDownloaderError`: For file download issues
-- `WhisperError`: For transcription API errors
-- `SqliteError`: For database operations
-- `SqliteInitializationError`: For database setup issues
+```typescript
+try {
+  const job = await transcriptionService.createTranscriptionJob(
+    "https://example.com/audio.mp3",
+  );
+} catch (error) {
+  if (error instanceof WhisperError) {
+    // Handle transcription API errors
+  } else if (error instanceof FileDownloaderError) {
+    // Handle download errors
+  } else if (error instanceof StorageError) {
+    // Handle database errors
+  }
+}
+```
 
-Each error includes:
+## 📄 License
 
-- Descriptive message
-- Error code
-- Original error cause (when available)
-- HTTP status (for API errors)
+MIT
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
