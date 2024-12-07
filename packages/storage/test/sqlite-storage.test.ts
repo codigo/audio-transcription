@@ -9,7 +9,10 @@ import {
   SqliteInitializationError,
   SqliteError,
 } from "../src/sqlite-storage.js";
-import type { TranscriptionJob, StoragePort } from "@codigo/audio-transcription-core";
+import type {
+  TranscriptionJob,
+  StoragePort,
+} from "@codigo/audio-transcription-core";
 
 // Add this type near the top of the file with other imports/types
 type SqliteStorageWithDb = StoragePort & {
