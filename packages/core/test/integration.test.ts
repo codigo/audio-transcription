@@ -41,7 +41,7 @@ t.test("Transcription Service Integration", async (t) => {
     mockAgent = new MockAgent({
       connections: 1,
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
+      keepAliveMaxTimeout: 10,
     });
     mockAgent.disableNetConnect();
     setGlobalDispatcher(mockAgent);
@@ -79,12 +79,16 @@ t.test("Transcription Service Integration", async (t) => {
         path: "/v1/audio/transcriptions",
         method: "POST",
         headers: (headers) => {
-          return headers['authorization'] === 'Bearer test-api-key' &&
-            headers['content-type']?.startsWith('multipart/form-data; boundary=');
-        }
+          return (
+            headers["authorization"] === "Bearer test-api-key" &&
+            headers["content-type"]?.startsWith(
+              "multipart/form-data; boundary=",
+            )
+          );
+        },
       })
       .reply(200, {
-        text: MOCK_TRANSCRIPTION_RESULT
+        text: MOCK_TRANSCRIPTION_RESULT,
       })
       .persist();
 
@@ -93,13 +97,17 @@ t.test("Transcription Service Integration", async (t) => {
       .intercept({
         path: "/callback",
         method: "POST",
-        body: (body) => true
+        body: (body) => true,
       })
-      .reply(200, { success: true }, {
-        headers: {
-          'content-type': 'application/json'
-        }
-      })
+      .reply(
+        200,
+        { success: true },
+        {
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      )
       .persist();
 
     const whisperClient = createWhisperClient({
@@ -172,21 +180,23 @@ t.test("Transcription Service Integration", async (t) => {
         method: "POST",
         headers: (headers) => {
           // If no auth header or wrong key, return false to trigger 401
-          if (headers['authorization'] !== 'Bearer test-api-key') {
+          if (headers["authorization"] !== "Bearer test-api-key") {
             return false;
           }
           // Otherwise check content type
-          return headers['content-type']?.startsWith('multipart/form-data; boundary=');
-        }
+          return headers["content-type"]?.startsWith(
+            "multipart/form-data; boundary=",
+          );
+        },
       })
       .defaultReplyHeaders({
-        'content-type': 'application/json'
+        "content-type": "application/json",
       })
       .reply(500, {
         error: {
           message: "Internal Server Error",
           type: "server_error",
-        }
+        },
       })
       .persist();
 
@@ -211,7 +221,8 @@ t.test("Transcription Service Integration", async (t) => {
       fileDownloader,
     });
 
-    const job = await transcriptionService.createTranscriptionJob(AUDIO_FILE_URL);
+    const job =
+      await transcriptionService.createTranscriptionJob(AUDIO_FILE_URL);
 
     // Wait for background processing with polling
     let failedJob;

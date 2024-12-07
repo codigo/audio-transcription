@@ -1,6 +1,6 @@
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";
-import { fetch} from "undici";
+import { fetch } from "undici";
 import FormData from "form-data";
 import retry from "retry";
 import type { WhisperClientPort } from "@codigo/audio-transcription-core";

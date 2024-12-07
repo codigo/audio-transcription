@@ -41,7 +41,7 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(200, expectedResponse);
 
@@ -66,19 +66,23 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
-      .reply(429, {
-        error: {
-          message: "Rate limit exceeded",
-          type: "rate_limit_exceeded",
-          code: "rate_limited"
-        }
-      }, {
-        headers: {
-          'retry-after': '1'
-        }
-      });
+      .reply(
+        429,
+        {
+          error: {
+            message: "Rate limit exceeded",
+            type: "rate_limit_exceeded",
+            code: "rate_limited",
+          },
+        },
+        {
+          headers: {
+            "retry-after": "1",
+          },
+        },
+      );
 
     // Second request - success
     mockPool
@@ -87,7 +91,7 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(200, expectedResponse);
 
@@ -111,14 +115,14 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(400, {
         error: {
           message: "Invalid file format",
           type: "invalid_request_error",
-          code: "invalid_file_format"
-        }
+          code: "invalid_file_format",
+        },
       });
 
     const client = createWhisperClient({
@@ -133,16 +137,28 @@ t.test("WhisperClient", async (t) => {
       t.ok(error instanceof WhisperError);
       if (error instanceof WhisperError) {
         // The client will throw a MAX_RETRIES_EXCEEDED error after all retries are exhausted
-        t.equal(error.code, "MAX_RETRIES_EXCEEDED", "Should have correct error code");
+        t.equal(
+          error.code,
+          "MAX_RETRIES_EXCEEDED",
+          "Should have correct error code",
+        );
         t.equal(error.status, 400, "Should have correct status code");
 
         // The original error should be in the cause
         const cause = error.cause;
         t.ok(cause instanceof WhisperError, "Cause should be a WhisperError");
         if (cause instanceof WhisperError) {
-          t.equal(cause.code, "invalid_file_format", "Cause should have correct error code");
+          t.equal(
+            cause.code,
+            "invalid_file_format",
+            "Cause should have correct error code",
+          );
           t.equal(cause.status, 400, "Cause should have correct status code");
-          t.match(cause.message, /Invalid file format/, "Cause should have correct error message");
+          t.match(
+            cause.message,
+            /Invalid file format/,
+            "Cause should have correct error message",
+          );
         }
       }
     }
@@ -159,7 +175,7 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(200, expectedResponse);
 
@@ -185,13 +201,13 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(500, {
         error: {
           message: "Internal server error",
-          type: "server_error"
-        }
+          type: "server_error",
+        },
       })
       .persist();
 
@@ -207,9 +223,17 @@ t.test("WhisperClient", async (t) => {
     } catch (error) {
       t.ok(error instanceof WhisperError);
       if (error instanceof WhisperError) {
-        t.equal(error.code, "MAX_RETRIES_EXCEEDED", "Should have correct error code");
+        t.equal(
+          error.code,
+          "MAX_RETRIES_EXCEEDED",
+          "Should have correct error code",
+        );
         t.equal(error.status, 400, "Should have correct status code");
-        t.match(error.message, /Failed to transcribe audio after 1 retries/, "Should have correct error message");
+        t.match(
+          error.message,
+          /Failed to transcribe audio after 1 retries/,
+          "Should have correct error message",
+        );
       }
     }
   });
@@ -225,14 +249,14 @@ t.test("WhisperClient", async (t) => {
         method: "POST",
         headers: {
           authorization: "Bearer test-key",
-        }
+        },
       })
       .reply(401, {
         error: {
           message: "Invalid API key",
           type: "invalid_request_error",
-          code: "invalid_api_key"
-        }
+          code: "invalid_api_key",
+        },
       });
 
     const client = createWhisperClient({
@@ -243,15 +267,22 @@ t.test("WhisperClient", async (t) => {
 
     try {
       await client.transcribe(audioPath);
-
     } catch (error) {
       t.ok(error instanceof WhisperError);
       if (error instanceof WhisperError) {
         const err = error as WhisperError;
         // Check the top-level error (MAX_RETRIES_EXCEEDED)
-        t.equal(err.code, "MAX_RETRIES_EXCEEDED", "Should have correct error code");
+        t.equal(
+          err.code,
+          "MAX_RETRIES_EXCEEDED",
+          "Should have correct error code",
+        );
         t.equal(err.status, 400, "Should have correct status code");
-        t.match(err.message, /Failed to transcribe audio after 1 retries/, "Should have correct error message");
+        t.match(
+          err.message,
+          /Failed to transcribe audio after 1 retries/,
+          "Should have correct error message",
+        );
 
         // Check the cause (should be an Error with the original message)
         t.ok(err.cause, "Should have a cause");

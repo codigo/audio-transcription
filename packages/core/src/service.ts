@@ -64,7 +64,8 @@ export const createTranscriptionService = (
       // Update job with error
       await deps.storage.updateJob(job.id, {
         status: "failed",
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       });
     } finally {
       // Remove job from pending map when done
