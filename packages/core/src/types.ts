@@ -40,6 +40,7 @@ export interface TranscriptionService {
     webhookUrl?: string,
   ): Promise<TranscriptionJob>;
   getTranscriptionJob(jobId: string): Promise<TranscriptionJob | null>;
+  waitForJob(jobId: string): Promise<void>;
 }
 
 export interface TranscriptionServiceDependencies {
