@@ -27,3 +27,9 @@ jobs:
       - run: pnpm build
       - run: pnpm lint
       - run: pnpm test
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: pnpm -r exec semantic-release --dry-run
