@@ -29,6 +29,7 @@ jobs:
       - run: pnpm test
 
   release:
+    name: Release Dry Run
     needs: build
     runs-on: ubuntu-latest
     steps:
