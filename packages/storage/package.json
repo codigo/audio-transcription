@@ -1,6 +1,6 @@
 {
   "name": "@codigo/audio-transcription-storage",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "@codigo/audio-transcription-core": "workspace:*",
     "@types/better-sqlite3": "^7.6.4",
     "@types/node": "^22.10.1",
-    "@types/tap": "^15.0.12",
+    "@types/tap": "^18.0.0",
     "tap": "^21.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
@@ -27,6 +27,27 @@
   },
   "peerDependencies": {
     "@codigo/audio-transcription-core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codigo-ai/audio-transcription.git"
+  },
+  "release": {
+    "extends": "semantic-release-monorepo",
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ]
   },
   "files": [
     "dist",
