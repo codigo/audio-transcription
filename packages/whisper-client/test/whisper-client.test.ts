@@ -290,28 +290,34 @@ t.test("WhisperClient", async (t) => {
     }
   });
 
-  t.test("should throw FileTooLargeError for files exceeding size limit", async (t) => {
-    // Create a file larger than the default 25MB limit
-    const maxFileSize = 5 * 1024 * 1024; // 5MB for testing
-    const oversizedFile = await createTempAudioFile(maxFileSize + 1024); // Slightly over limit
+  t.test(
+    "should throw FileTooLargeError for files exceeding size limit",
+    async (t) => {
+      // Create a file larger than the default 25MB limit
+      const maxFileSize = 5 * 1024 * 1024; // 5MB for testing
+      const oversizedFile = await createTempAudioFile(maxFileSize + 1024); // Slightly over limit
 
-    const client = createWhisperClient({
-      apiKey: "test-key",
-      maxFileSize,
-    });
+      const client = createWhisperClient({
+        apiKey: "test-key",
+        maxFileSize,
+      });
 
-    try {
-      await client.transcribe(oversizedFile);
-    } catch (error) {
-      t.ok(error instanceof FileTooLargeError, "Should throw FileTooLargeError");
-      t.equal(error.code, "FILE_TOO_LARGE", "Should have correct error code");
-      t.match(
-        error.message,
-        /File size .* exceeds maximum size/,
-        "Should have descriptive error message"
-      );
-    }
-  });
+      try {
+        await client.transcribe(oversizedFile);
+      } catch (error) {
+        t.ok(
+          error instanceof FileTooLargeError,
+          "Should throw FileTooLargeError",
+        );
+        t.equal(error.code, "FILE_TOO_LARGE", "Should have correct error code");
+        t.match(
+          error.message,
+          /File size .* exceeds maximum size/,
+          "Should have descriptive error message",
+        );
+      }
+    },
+  );
 });
 
 // Helper function
